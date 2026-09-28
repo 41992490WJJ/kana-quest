@@ -1,13 +1,14 @@
-const CACHE_NAME = "kana-quest-v1";
+const CACHE_NAME = "kana-quest-v2";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./manifest.webmanifest",
-  "./src/app.js",
-  "./src/data.js",
-  "./src/learning.js",
-  "./src/storage.js",
+  "./styles.css?v=2",
+  "./manifest.webmanifest?v=2",
+  "./src/app.js?v=2",
+  "./src/data.js?v=2",
+  "./src/learning.js?v=2",
+  "./src/speech.js?v=2",
+  "./src/storage.js?v=2",
   "./icons/icon.svg",
 ];
 
@@ -28,16 +29,19 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return (
-        cached ??
-        fetch(event.request).then((response) => {
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-      );
-    }),
+        }
+        return response;
+      })
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        if (event.request.mode === "navigate") return caches.match("./index.html");
+        return Response.error();
+      }),
   );
 });
-

@@ -9,8 +9,8 @@
       content="面向中文母语零基础学习者的日语五十音闯关练习 PWA。"
     >
     <title>日语五十音闯关学习</title>
-    <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.webmanifest?v=2">
+    <link rel="stylesheet" href="styles.css?v=2">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23246b5b'/%3E%3Ccircle cx='45' cy='19' r='8' fill='%23f7c948'/%3E%3Cpath d='M17 45c7-14 16-23 30-28' stroke='%23fff7df' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M19 20h19' stroke='%23fff7df' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
   </head>
   <body>
@@ -29,25 +29,28 @@
         </nav>
       </header>
 
+      <div class="storage-warning hidden" id="storageWarning" role="alert"></div>
+
       <main>
         <section id="homeView" class="view active" aria-labelledby="homeTitle">
           <div class="dashboard">
             <div class="intro-panel">
-              <p class="eyebrow">MVP 可练习内容</p>
-              <h1 id="homeTitle">从 あ行 开始，把每个假名练到真的记住。</h1>
+              <p class="eyebrow">基础五十音</p>
+              <h1 id="homeTitle">按行闯关，把平假名和片假名练到真的记住。</h1>
               <p>
                 先学平假名，再学片假名；答错的假名会回到后面的题里，
                 掌握度达标后才算通过。
               </p>
               <div class="primary-actions">
-                <button class="primary-btn" id="startALineBtn">开始 / 继续 あ行</button>
-                <button class="secondary-btn" id="startQuizBtn">直接进入 あ行测试</button>
+                <button class="primary-btn" id="startNextRowBtn">继续学习</button>
+                <button class="secondary-btn" id="mistakeQuizBtn">错题测试</button>
+                <button class="secondary-btn" id="comprehensiveQuizBtn">综合测试</button>
               </div>
             </div>
 
             <div class="summary-panel" aria-live="polite">
               <div>
-                <span class="metric-label">あ行掌握度</span>
+                <span class="metric-label">基础假名总掌握度</span>
                 <strong id="homeMastery">0%</strong>
               </div>
               <div class="progress-track" aria-hidden="true">
@@ -63,12 +66,27 @@
                   <dd id="homeAccuracy">0%</dd>
                 </div>
                 <div>
-                  <dt>状态</dt>
+                  <dt>已通过</dt>
                   <dd id="homeStatus">未学习</dd>
                 </div>
               </dl>
             </div>
           </div>
+
+          <section class="settings-band" aria-labelledby="speechSettingsTitle">
+            <div>
+              <p class="eyebrow">发音设置</p>
+              <h2 id="speechSettingsTitle">日语语音</h2>
+              <p id="speechStatus">正在检测设备语音…</p>
+            </div>
+            <div class="settings-controls">
+              <label class="toggle-label">
+                <input id="autoPlayToggle" type="checkbox">
+                <span>答对后自动播放发音</span>
+              </label>
+              <button class="secondary-btn" id="testSpeechBtn" type="button">测试发音</button>
+            </div>
+          </section>
 
           <div class="course-grid" id="courseGrid" aria-label="课程列表"></div>
         </section>
@@ -77,17 +95,24 @@
           <div class="mode-header">
             <div>
               <p class="eyebrow">顺序学习</p>
-              <h2 id="learnTitle">あ行学习</h2>
+              <h2 id="learnTitle">学习</h2>
             </div>
             <button class="ghost-btn" data-view-target="home">返回主页</button>
           </div>
 
+          <div class="answer-sheet">
+            <button class="answer-toggle" id="toggleLearnStrip" type="button" aria-expanded="false" aria-controls="learnStrip">⌄ 查看本行假名表</button>
+            <div class="kana-strip hidden" id="learnStrip" aria-label="本行假名"></div>
+          </div>
+
           <div class="practice-layout">
-            <aside class="kana-strip" id="learnStrip" aria-label="本行假名"></aside>
             <section class="question-panel" aria-live="polite">
               <div class="question-meta">
                 <span id="learnStepLabel">第 1 题</span>
-                <span id="learnMasteryLabel">掌握度 0%</span>
+                <span class="question-meta-actions">
+                  <span id="learnMasteryLabel">掌握度 0%</span>
+                  <button class="icon-btn" id="learnSpeakBtn" type="button" aria-label="播放当前假名发音" title="播放发音">🔊</button>
+                </span>
               </div>
               <div class="kana-card" id="learnPrompt">あ</div>
               <p class="question-text">选择它的 Hepburn 罗马音</p>
@@ -101,7 +126,7 @@
           <div class="mode-header">
             <div>
               <p class="eyebrow">行测验</p>
-              <h2 id="quizTitle">あ行测试</h2>
+              <h2 id="quizTitle">测试</h2>
             </div>
             <button class="ghost-btn" data-view-target="home">返回主页</button>
           </div>
@@ -109,7 +134,10 @@
           <section class="question-panel quiz-panel" aria-live="polite">
             <div class="question-meta">
               <span id="quizTypeLabel">假名 → 读音</span>
-              <span id="quizProgressLabel">0 / 0</span>
+              <span class="question-meta-actions">
+                <span id="quizProgressLabel">第 1 题</span>
+                <button class="icon-btn" id="quizSpeakBtn" type="button" aria-label="播放当前假名发音" title="播放发音">🔊</button>
+              </span>
             </div>
             <div id="quizPrompt" class="quiz-prompt"></div>
             <p class="question-text" id="quizInstruction">选择正确答案</p>
@@ -138,6 +166,10 @@
           </div>
 
           <div class="records-actions">
+            <label class="row-filter-label">
+              显示课程
+              <select id="recordsRowFilter"></select>
+            </label>
             <button class="secondary-btn" id="exportBtn">导出 JSON</button>
             <label class="secondary-btn file-btn">
               导入 JSON
@@ -146,11 +178,14 @@
             <button class="danger-btn" id="resetBtn">重置记录</button>
           </div>
 
+          <p class="storage-note">本机存储 key：<code>kanaQuest:v1</code>。程序更新不会自动重置记录。</p>
+
           <div class="records-table-wrap">
             <table class="records-table">
               <thead>
                 <tr>
                   <th>假名</th>
+                  <th>课程</th>
                   <th>读音</th>
                   <th>次数</th>
                   <th>正确</th>
@@ -168,6 +203,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script type="module" src="src/app.js"></script>
+    <script type="module" src="src/app.js?v=2"></script>
   </body>
 </html>
+

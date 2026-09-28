@@ -95,9 +95,13 @@ button {
 
 .top-actions,
 .primary-actions,
-.records-actions {
+.records-actions,
+.settings-controls,
+.course-actions,
+.question-meta-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
 }
 
@@ -119,7 +123,8 @@ button {
 
 .intro-panel,
 .summary-panel,
-.question-panel {
+.question-panel,
+.settings-band {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -175,7 +180,9 @@ h3 {
 .secondary-btn,
 .ghost-btn,
 .danger-btn,
-.option-btn {
+.option-btn,
+.icon-btn,
+.answer-toggle {
   min-height: 44px;
   border-radius: 8px;
   border: 1px solid transparent;
@@ -196,8 +203,16 @@ h3 {
 .secondary-btn:hover,
 .ghost-btn:hover,
 .danger-btn:hover,
-.option-btn:hover {
+.option-btn:hover,
+.icon-btn:hover,
+.answer-toggle:hover {
   transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none !important;
 }
 
 .secondary-btn,
@@ -225,6 +240,47 @@ h3 {
   justify-content: space-between;
   gap: 22px;
   padding: 24px;
+}
+
+.settings-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding: 18px 22px;
+  box-shadow: none;
+}
+
+.settings-band h2 {
+  font-size: 1.25rem;
+}
+
+.settings-band p:last-child {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.toggle-label,
+.row-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.toggle-label input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.row-filter-label select {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 8px 34px 8px 10px;
 }
 
 .summary-panel strong {
@@ -274,7 +330,7 @@ h3 {
 
 .course-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -287,8 +343,7 @@ h3 {
   text-align: left;
 }
 
-.course-card[disabled] {
-  cursor: not-allowed;
+.course-card.locked {
   opacity: 0.58;
 }
 
@@ -314,9 +369,37 @@ h3 {
 }
 
 .kana-preview {
+  display: block;
   color: #394842;
   font-size: 1.1rem;
   word-break: keep-all;
+}
+
+.kata-preview {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.course-card .metric-label {
+  display: block;
+  margin-top: 14px;
+}
+
+.course-actions {
+  min-height: 44px;
+  margin-top: 14px;
+}
+
+.course-actions button {
+  flex: 1;
+  min-width: 88px;
+}
+
+.unlock-hint {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .mode-header {
@@ -328,15 +411,28 @@ h3 {
 }
 
 .practice-layout {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
-  gap: 18px;
+  display: block;
 }
 
 .kana-strip {
   display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
-  align-content: start;
+  margin-top: 10px;
+}
+
+.answer-sheet {
+  margin-bottom: 12px;
+}
+
+.answer-toggle {
+  min-height: 36px;
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
 .strip-item {
@@ -425,6 +521,24 @@ h3 {
   color: var(--bad);
 }
 
+.option-btn.selected {
+  border-color: var(--primary);
+  background: #e8f2ed;
+  color: var(--primary-dark);
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  border-color: var(--line);
+  background: var(--panel);
+  padding: 0;
+  font-size: 1.2rem;
+}
+
 .feedback {
   min-height: 28px;
   margin: 14px 0 0;
@@ -451,6 +565,21 @@ h3 {
 
 .records-actions {
   margin-bottom: 16px;
+}
+
+.storage-note {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.storage-warning {
+  margin-bottom: 18px;
+  border: 1px solid #efb5a6;
+  border-radius: 8px;
+  background: #fff6f2;
+  color: #8e241a;
+  padding: 12px 14px;
+  font-weight: 700;
 }
 
 .file-btn {
@@ -517,7 +646,6 @@ h3 {
 
 @media (max-width: 860px) {
   .dashboard,
-  .practice-layout,
   .dual-choice {
     grid-template-columns: 1fr;
   }
@@ -526,9 +654,6 @@ h3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .kana-strip {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 620px) {
@@ -538,14 +663,16 @@ h3 {
   }
 
   .topbar,
-  .mode-header {
+  .mode-header,
+  .settings-band {
     align-items: stretch;
     flex-direction: column;
   }
 
   .top-actions,
   .primary-actions,
-  .records-actions {
+  .records-actions,
+  .settings-controls {
     display: grid;
     grid-template-columns: 1fr;
   }
@@ -558,6 +685,10 @@ h3 {
 
   .kana-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .question-meta-actions {
+    justify-content: space-between;
   }
 
   .question-meta {
