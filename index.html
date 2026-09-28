@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#246b5b">
+    <meta
+      name="description"
+      content="面向中文母语零基础学习者的日语五十音闯关练习 PWA。"
+    >
+    <title>日语五十音闯关学习</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23246b5b'/%3E%3Ccircle cx='45' cy='19' r='8' fill='%23f7c948'/%3E%3Cpath d='M17 45c7-14 16-23 30-28' stroke='%23fff7df' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M19 20h19' stroke='%23fff7df' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <button class="brand" data-view-target="home" aria-label="返回主页">
+          <span class="brand-mark">あ</span>
+          <span>
+            <strong>五十音闯关</strong>
+            <small>第一阶段：假名识别与读音</small>
+          </span>
+        </button>
+        <nav class="top-actions" aria-label="主导航">
+          <button class="ghost-btn" data-view-target="home">主页</button>
+          <button class="ghost-btn" data-view-target="records">学习记录</button>
+        </nav>
+      </header>
+
+      <main>
+        <section id="homeView" class="view active" aria-labelledby="homeTitle">
+          <div class="dashboard">
+            <div class="intro-panel">
+              <p class="eyebrow">MVP 可练习内容</p>
+              <h1 id="homeTitle">从 あ行 开始，把每个假名练到真的记住。</h1>
+              <p>
+                先学平假名，再学片假名；答错的假名会回到后面的题里，
+                掌握度达标后才算通过。
+              </p>
+              <div class="primary-actions">
+                <button class="primary-btn" id="startALineBtn">开始 / 继续 あ行</button>
+                <button class="secondary-btn" id="startQuizBtn">直接进入 あ行测试</button>
+              </div>
+            </div>
+
+            <div class="summary-panel" aria-live="polite">
+              <div>
+                <span class="metric-label">あ行掌握度</span>
+                <strong id="homeMastery">0%</strong>
+              </div>
+              <div class="progress-track" aria-hidden="true">
+                <span id="homeMasteryBar"></span>
+              </div>
+              <dl class="mini-stats">
+                <div>
+                  <dt>练习次数</dt>
+                  <dd id="homeAttempts">0</dd>
+                </div>
+                <div>
+                  <dt>正确率</dt>
+                  <dd id="homeAccuracy">0%</dd>
+                </div>
+                <div>
+                  <dt>状态</dt>
+                  <dd id="homeStatus">未学习</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="course-grid" id="courseGrid" aria-label="课程列表"></div>
+        </section>
+
+        <section id="learnView" class="view" aria-labelledby="learnTitle">
+          <div class="mode-header">
+            <div>
+              <p class="eyebrow">顺序学习</p>
+              <h2 id="learnTitle">あ行学习</h2>
+            </div>
+            <button class="ghost-btn" data-view-target="home">返回主页</button>
+          </div>
+
+          <div class="practice-layout">
+            <aside class="kana-strip" id="learnStrip" aria-label="本行假名"></aside>
+            <section class="question-panel" aria-live="polite">
+              <div class="question-meta">
+                <span id="learnStepLabel">第 1 题</span>
+                <span id="learnMasteryLabel">掌握度 0%</span>
+              </div>
+              <div class="kana-card" id="learnPrompt">あ</div>
+              <p class="question-text">选择它的 Hepburn 罗马音</p>
+              <div class="option-grid" id="learnOptions"></div>
+              <p class="feedback" id="learnFeedback" role="status"></p>
+            </section>
+          </div>
+        </section>
+
+        <section id="quizView" class="view" aria-labelledby="quizTitle">
+          <div class="mode-header">
+            <div>
+              <p class="eyebrow">行测验</p>
+              <h2 id="quizTitle">あ行测试</h2>
+            </div>
+            <button class="ghost-btn" data-view-target="home">返回主页</button>
+          </div>
+
+          <section class="question-panel quiz-panel" aria-live="polite">
+            <div class="question-meta">
+              <span id="quizTypeLabel">假名 → 读音</span>
+              <span id="quizProgressLabel">0 / 0</span>
+            </div>
+            <div id="quizPrompt" class="quiz-prompt"></div>
+            <p class="question-text" id="quizInstruction">选择正确答案</p>
+            <div class="option-grid" id="quizOptions"></div>
+            <div class="dual-choice hidden" id="dualChoice">
+              <div>
+                <h3>平假名</h3>
+                <div class="option-grid" id="dualHiraOptions"></div>
+              </div>
+              <div>
+                <h3>片假名</h3>
+                <div class="option-grid" id="dualKataOptions"></div>
+              </div>
+            </div>
+            <p class="feedback" id="quizFeedback" role="status"></p>
+          </section>
+        </section>
+
+        <section id="recordsView" class="view" aria-labelledby="recordsTitle">
+          <div class="mode-header">
+            <div>
+              <p class="eyebrow">本地记录</p>
+              <h2 id="recordsTitle">学习记录</h2>
+            </div>
+            <button class="ghost-btn" data-view-target="home">返回主页</button>
+          </div>
+
+          <div class="records-actions">
+            <button class="secondary-btn" id="exportBtn">导出 JSON</button>
+            <label class="secondary-btn file-btn">
+              导入 JSON
+              <input id="importInput" type="file" accept="application/json">
+            </label>
+            <button class="danger-btn" id="resetBtn">重置记录</button>
+          </div>
+
+          <div class="records-table-wrap">
+            <table class="records-table">
+              <thead>
+                <tr>
+                  <th>假名</th>
+                  <th>读音</th>
+                  <th>次数</th>
+                  <th>正确</th>
+                  <th>错误</th>
+                  <th>熟练度</th>
+                  <th>最近</th>
+                </tr>
+              </thead>
+              <tbody id="recordsBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

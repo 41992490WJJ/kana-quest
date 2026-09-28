@@ -1,0 +1,18 @@
+{
+  "name": "日语五十音闯关学习",
+  "short_name": "五十音闯关",
+  "description": "面向中文母语零基础学习者的日语五十音闯关练习 PWA。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbf8ef",
+  "theme_color": "#246b5b",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
