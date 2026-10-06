@@ -146,8 +146,8 @@ async function loadJapaneseVoices(timeoutMs) {
 
 function chooseVoice(voices) {
   return (
-    voices.find((voice) => voice.default) ??
-    voices.find((voice) => voice.localService) ??
+    voices.find((voice) => voice.name === "Microsoft Ayumi - Japanese (Japan)") ??
+    voices.find((voice) => voice.name.includes("Ayumi")) ??
     voices[0]
   );
 }
