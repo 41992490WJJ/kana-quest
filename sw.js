@@ -1,13 +1,13 @@
-const CACHE_NAME = "kana-quest-v3";
+const CACHE_NAME = "kana-quest-v4";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css?v=2",
   "./manifest.webmanifest?v=2",
-  "./src/app.js?v=3",
+  "./src/app.js?v=4",
   "./src/data.js?v=2",
   "./src/learning.js?v=2",
-  "./src/speech.js?v=3",
+  "./src/speech.js?v=4",
   "./src/storage.js?v=2",
   "./icons/icon.svg",
 ];
