@@ -17,7 +17,7 @@ import {
   markRowPassed,
   scoreAnswer,
 } from "./learning.js?v=2";
-import { getSpeechSupport, speakJapanese, stopSpeech } from "./speech.js?v=3";
+import { getSpeechSupport, speakJapanese, stopSpeech } from "./speech.js?v=4";
 import {
   exportState,
   getStorageStatus,
@@ -107,7 +107,7 @@ document.querySelectorAll("[data-view-target]").forEach((button) => {
 });
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=3").catch(() => {}));
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=4").catch(() => {}));
 }
 
 setupRecordFilter();
@@ -296,7 +296,7 @@ function handleLearnAnswer(isCorrect, button, correctAnswer) {
     learnQueue.push(currentLearnKanaId, currentLearnKanaId);
   }
   renderAll();
-  schedule(nextLearnQuestion, isCorrect ? 800 : 1300);
+  schedule(nextLearnQuestion, isCorrect ? 1200 : 1300);
 }
 
 function startQuiz(rowId, mode) {
@@ -422,7 +422,7 @@ function finishQuizStep() {
     }, 1000);
     return;
   }
-  schedule(nextQuizQuestion, 1050);
+  schedule(nextQuizQuestion, 1200);
 }
 
 function renderOptions(container, options, answer, onClick) {
