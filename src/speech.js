@@ -1,11 +1,14 @@
 const JAPANESE_LANGUAGE = "ja-JP";
-const CANCEL_SETTLE_MS = 120;
+const CANCEL_SETTLE_MS = 200;
+const SHORT_KANA_WARMUP_MS = 180;
 
 let cachedJapaneseVoices = null;
 let voicesLoadingPromise = null;
 let activeUtterance = null;
 let playbackRequestId = 0;
 let lastCancelAt = 0;
+let lastSpokenText = null;
+let lastSpeechStartAt = 0;
 
 export async function getSpeechSupport(timeoutMs = 1200) {
   if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
@@ -37,6 +40,8 @@ export async function speakJapanese(text) {
   if (requestId !== playbackRequestId) return;
 
   const synth = window.speechSynthesis;
+  // Ignore repeated clicks while the same kana is already being spoken.
+  if (activeUtterance && lastSpokenText === text && (synth.speaking || synth.pending)) return;
   if (synth.speaking || synth.pending) {
     cancelSynthesis(synth);
   }
@@ -45,21 +50,32 @@ export async function speakJapanese(text) {
   if (lastCancelAt && settleDelay) await delay(settleDelay);
   if (requestId !== playbackRequestId) return;
 
+  // Give the audio output a brief chance to settle before very short utterances.
+  if (text.length <= 2) await delay(SHORT_KANA_WARMUP_MS);
+  if (requestId !== playbackRequestId) return;
+
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = JAPANESE_LANGUAGE;
   utterance.voice = chooseVoice(support.voices);
   utterance.rate = 0.88;
   utterance.pitch = 1;
   activeUtterance = utterance;
+  lastSpokenText = text;
 
   return new Promise((resolve, reject) => {
     const finish = () => {
       if (activeUtterance === utterance) activeUtterance = null;
     };
 
+    utterance.addEventListener("start", () => {
+      lastSpeechStartAt = performance.now();
+      console.debug("[kana speech] start", { text, voice: utterance.voice?.name });
+    }, { once: true });
+
     utterance.addEventListener(
       "end",
       () => {
+        console.debug("[kana speech] end", { text, durationMs: Math.round(performance.now() - lastSpeechStartAt) });
         finish();
         resolve();
       },
@@ -69,6 +85,7 @@ export async function speakJapanese(text) {
     utterance.addEventListener(
       "error",
       (event) => {
+        console.debug("[kana speech] error", { text, error: event.error });
         finish();
         if (event.error === "interrupted" || event.error === "canceled") {
           resolve();
