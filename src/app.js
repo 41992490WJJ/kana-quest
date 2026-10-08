@@ -17,7 +17,7 @@ import {
   markRowPassed,
   scoreAnswer,
 } from "./learning.js?v=2";
-import { getSpeechSupport, speakJapanese, stopSpeech } from "./speech.js?v=2";
+import { getSpeechSupport, speakJapanese, stopSpeech } from "./speech.js?v=3";
 import {
   exportState,
   getStorageStatus,
@@ -107,7 +107,7 @@ document.querySelectorAll("[data-view-target]").forEach((button) => {
 });
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=2").catch(() => {}));
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=3").catch(() => {}));
 }
 
 setupRecordFilter();

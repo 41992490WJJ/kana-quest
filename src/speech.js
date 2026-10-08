@@ -1,7 +1,11 @@
 const JAPANESE_LANGUAGE = "ja-JP";
+const CANCEL_SETTLE_MS = 120;
 
 let cachedJapaneseVoices = null;
 let voicesLoadingPromise = null;
+let activeUtterance = null;
+let playbackRequestId = 0;
+let lastCancelAt = 0;
 
 export async function getSpeechSupport(timeoutMs = 1200) {
   if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
@@ -13,7 +17,6 @@ export async function getSpeechSupport(timeoutMs = 1200) {
   }
 
   const voices = await loadJapaneseVoices(timeoutMs);
-
   return voices.length
     ? {
         supported: true,
@@ -28,33 +31,49 @@ export async function getSpeechSupport(timeoutMs = 1200) {
 }
 
 export async function speakJapanese(text) {
+  const requestId = ++playbackRequestId;
   const support = await getSpeechSupport();
+  if (!support.supported) throw new Error(support.message);
+  if (requestId !== playbackRequestId) return;
 
-  if (!support.supported) {
-    throw new Error(support.message);
+  const synth = window.speechSynthesis;
+  if (synth.speaking || synth.pending) {
+    cancelSynthesis(synth);
   }
 
-  window.speechSynthesis.cancel();
+  const settleDelay = Math.max(0, CANCEL_SETTLE_MS - (Date.now() - lastCancelAt));
+  if (lastCancelAt && settleDelay) await delay(settleDelay);
+  if (requestId !== playbackRequestId) return;
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = JAPANESE_LANGUAGE;
   utterance.voice = chooseVoice(support.voices);
   utterance.rate = 0.88;
   utterance.pitch = 1;
+  activeUtterance = utterance;
 
   return new Promise((resolve, reject) => {
-    utterance.addEventListener("end", resolve, { once: true });
+    const finish = () => {
+      if (activeUtterance === utterance) activeUtterance = null;
+    };
+
+    utterance.addEventListener(
+      "end",
+      () => {
+        finish();
+        resolve();
+      },
+      { once: true },
+    );
 
     utterance.addEventListener(
       "error",
       (event) => {
-        // interrupted 通常只是上一段语音被新的播放请求主动取消，
-        // 不属于真正的发音失败。
-        if (event.error === "interrupted") {
+        finish();
+        if (event.error === "interrupted" || event.error === "canceled") {
           resolve();
           return;
         }
-
         reject(
           new Error(
             event.error
@@ -66,88 +85,72 @@ export async function speakJapanese(text) {
       { once: true },
     );
 
-    window.speechSynthesis.speak(utterance);
+    synth.speak(utterance);
   });
 }
 
 export function stopSpeech() {
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
-  }
+  playbackRequestId += 1;
+  if (!("speechSynthesis" in window)) return;
+  const synth = window.speechSynthesis;
+  if (synth.speaking || synth.pending) cancelSynthesis(synth);
+  activeUtterance = null;
 }
 
 async function loadJapaneseVoices(timeoutMs) {
-  if (cachedJapaneseVoices) {
-    return cachedJapaneseVoices;
-  }
-
-  if (voicesLoadingPromise) {
-    return voicesLoadingPromise;
-  }
+  if (cachedJapaneseVoices) return cachedJapaneseVoices;
+  if (voicesLoadingPromise) return voicesLoadingPromise;
 
   voicesLoadingPromise = new Promise((resolve) => {
     const filterJapaneseVoices = () => {
       const voices = window.speechSynthesis
         .getVoices()
-        .filter((voice) =>
-          voice.lang.toLowerCase().startsWith("ja"),
-        );
-
-      if (voices.length) {
-        cachedJapaneseVoices = voices;
-      }
-
+        .filter((voice) => voice.lang.toLowerCase().startsWith("ja"));
+      if (voices.length) cachedJapaneseVoices = voices;
       return voices;
     };
 
     const initial = filterJapaneseVoices();
-
     if (initial.length) {
       resolve(initial);
       return;
     }
 
     let settled = false;
-
     const finish = () => {
       if (settled) return;
       settled = true;
-
-      window.speechSynthesis.removeEventListener(
-        "voiceschanged",
-        handleVoicesChanged,
-      );
-
-      const voices = filterJapaneseVoices();
-      resolve(voices);
+      window.speechSynthesis.removeEventListener("voiceschanged", handleVoicesChanged);
+      resolve(filterJapaneseVoices());
     };
-
     const handleVoicesChanged = () => {
-      const voices = filterJapaneseVoices();
-
-      if (voices.length) {
-        finish();
-      }
+      if (filterJapaneseVoices().length) finish();
     };
 
-    window.speechSynthesis.addEventListener(
-      "voiceschanged",
-      handleVoicesChanged,
-    );
-
+    window.speechSynthesis.addEventListener("voiceschanged", handleVoicesChanged);
     window.setTimeout(finish, timeoutMs);
   });
 
   const result = await voicesLoadingPromise;
   voicesLoadingPromise = null;
-
   return result;
+}
+
+function cancelSynthesis(synth) {
+  synth.cancel();
+  lastCancelAt = Date.now();
 }
 
 function chooseVoice(voices) {
   return (
     voices.find((voice) => voice.name === "Microsoft Ayumi - Japanese (Japan)") ??
     voices.find((voice) => voice.name.includes("Ayumi")) ??
+    voices.find((voice) => voice.default) ??
+    voices.find((voice) => voice.localService) ??
     voices[0]
   );
+}
+
+function delay(duration) {
+  return new Promise((resolve) => window.setTimeout(resolve, duration));
 }

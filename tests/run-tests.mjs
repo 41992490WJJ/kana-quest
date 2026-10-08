@@ -105,31 +105,51 @@ const historyRatio = historyQuestions / samples;
 assert.ok(historyRatio > 0.18 && historyRatio < 0.32, `历史题比例应接近 25%，实际为 ${historyRatio}`);
 
 let spokenUtterance = null;
+let cancelCount = 0;
 class MockUtterance extends EventTarget {
   constructor(text) {
     super();
     this.text = text;
   }
 }
+const mockSpeechSynthesis = {
+  speaking: false,
+  pending: false,
+  getVoices: () => [{ lang: "ja-JP", name: "Mock Japanese", default: true, localService: true }],
+  cancel() {
+    cancelCount += 1;
+    this.speaking = false;
+    this.pending = false;
+  },
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  speak(utterance) {
+    spokenUtterance = utterance;
+    this.speaking = true;
+    queueMicrotask(() => {
+      this.speaking = false;
+      utterance.dispatchEvent(new Event("end"));
+    });
+  },
+};
 globalThis.window = {
   SpeechSynthesisUtterance: MockUtterance,
   setTimeout,
-  speechSynthesis: {
-    getVoices: () => [{ lang: "ja-JP", name: "Mock Japanese", default: true, localService: true }],
-    cancel: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    speak: (utterance) => {
-      spokenUtterance = utterance;
-      queueMicrotask(() => utterance.dispatchEvent(new Event("end")));
-    },
-  },
+  speechSynthesis: mockSpeechSynthesis,
 };
 globalThis.SpeechSynthesisUtterance = MockUtterance;
 const speech = await import("../src/speech.js");
 await speech.speakJapanese("あ");
 assert.equal(spokenUtterance.text, "あ");
 assert.equal(spokenUtterance.lang, "ja-JP");
+assert.equal(cancelCount, 0, "空闲状态首次播放不应先 cancel，以免吞掉首辅音");
+
+mockSpeechSynthesis.speaking = true;
+const replayStartedAt = Date.now();
+await speech.speakJapanese("き");
+assert.equal(cancelCount, 1, "有上一段语音时才应取消");
+assert.ok(Date.now() - replayStartedAt >= 100, "取消后应等待语音引擎稳定");
+assert.equal(spokenUtterance.text, "き");
 
 console.log(JSON.stringify({
   rows: data.ROWS.length,
@@ -137,4 +157,5 @@ console.log(JSON.stringify({
   migratedAttempts: migrated.kanaStats["a-hira"].attempts,
   historyRatio: Number(historyRatio.toFixed(3)),
   speechLanguage: spokenUtterance.lang,
+  cancelCount,
 }));
